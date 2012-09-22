@@ -21,6 +21,19 @@
 package org.broad.igv.feature.genome;
 
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.log4j.Logger;
 import org.broad.igv.DirectoryManager;
 import org.broad.igv.Globals;
@@ -29,12 +42,6 @@ import org.broad.igv.feature.ChromosomeImpl;
 import org.broad.igv.feature.Cytoband;
 import org.broad.igv.track.FeatureTrack;
 import org.broad.igv.ui.util.MessageUtils;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.*;
 
 /**
  * Simple model of a genome.  Keeps an ordered list of Chromosomes, an alias table, and genome position offsets
@@ -95,12 +102,21 @@ public class GenomeImpl implements Genome {
         if (str == null) {
             return str;
         } else {
+          if ( chrAliasTable.size() == 0 ) {
+            return str.intern();
+          } else {
+            if (!chrAliasTable.containsKey(str)) {
+              return str.intern();
+            } else {
+              return chrAliasTable.get(str);
+            }
+          }
             //We intern strings used as chromosomes
             //to prevent storing multiple times
-            if (!chrAliasTable.containsKey(str)) {
+            /*if (!chrAliasTable.containsKey(str)) {
                 chrAliasTable.put(str, str);
             }
-            return chrAliasTable.get(str);
+            return chrAliasTable.get(str);*/
         }
     }
 
@@ -279,8 +295,16 @@ public class GenomeImpl implements Genome {
 
 
     public long getCumulativeOffset(String chr) {
-
-        Long cumOffset = cumulativeOffsets.get(chr);
+      if ( cumulativeOffsets.size() == 0 ) {
+        long offset = 0;
+        for ( Chromosome cr : getChromosomes() ) {
+          cumulativeOffsets.put(cr.getName(), new Long(offset));
+          offset += cr.getLength();
+        }
+      }
+      return cumulativeOffsets.get(chr);
+    }
+     /*   Long cumOffset = cumulativeOffsets.get(chr);
         if (cumOffset == null) {
             long offset = 0;
             for (String c : getChromosomeNames()) {
@@ -293,7 +317,7 @@ public class GenomeImpl implements Genome {
             cumulativeOffsets.put(chr, cumOffset);
         }
         return cumOffset.longValue();
-    }
+    }*/
 
     /**
      * Covert the chromosome coordinate in BP to genome coordinates in KBP
